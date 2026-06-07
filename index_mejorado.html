@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Edipo Rey</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#4facfe,#00f2fe);min-height:100vh}
+.pantalla{display:none;justify-content:center;align-items:center;min-height:100vh;padding:20px}
+.activa{display:flex}
+.card{background:#fff;padding:30px;border-radius:16px;max-width:800px;width:100%;box-shadow:0 5px 20px rgba(0,0,0,.2)}
+h1,h2{text-align:center}
+button{cursor:pointer;border:none;border-radius:10px;padding:12px 20px}
+#btnIniciar,#siguiente{background:#2196F3;color:#fff;font-size:18px}
+.barra{width:100%;height:25px;background:#ddd;border-radius:20px;overflow:hidden}
+.progreso{height:100%;width:0;background:#4CAF50}
+.opcion{display:block;width:100%;margin:10px 0;padding:12px;background:#f0f0f0;text-align:left}
+.opcion:hover{background:#dfefff}
+.correcta{background:#4CAF50!important;color:white}
+.incorrecta{background:#f44336!important;color:white}
+#resultado,#puntaje,#final{text-align:center;font-weight:bold}
+</style>
+</head>
+<body>
+
+<div id="menu" class="pantalla activa">
+  <div class="card">
+    <h1>📚 Quiz de Edipo Rey</h1>
+    <p>Demuestra cuánto sabes sobre la tragedia clásica de Sófocles.</p>
+    <p>✔ 12 preguntas<br>✔ Puntaje final<br>✔ Preguntas aleatorias</p>
+    <div style="text-align:center">
+      <button id="btnIniciar" onclick="iniciarJuego()">🎮 Iniciar Quiz</button>
+    </div>
+  </div>
+</div>
+
+<div id="carga" class="pantalla">
+  <div class="card">
+    <h2>Cargando Quiz...</h2>
+    <div class="barra"><div id="progreso" class="progreso"></div></div>
+    <p id="textoCarga">0%</p>
+  </div>
+</div>
+
+<div id="quiz" class="pantalla">
+  <div class="card">
+    <h1>📚 Quiz: Edipo Rey</h1>
+    <div id="puntaje">Puntaje: 0 / 12</div>
+    <div id="pregunta"></div>
+    <div id="opciones"></div>
+    <div id="resultado"></div>
+    <div style="text-align:center">
+      <button id="siguiente" style="display:none" onclick="siguientePregunta()">Siguiente Pregunta</button>
+    </div>
+    <div id="final"></div>
+  </div>
+</div>
+
+<script>
+const preguntas=[
+{pregunta:"¿Quién es el protagonista de la obra Edipo Rey?",opciones:["A) Creonte","B) Tiresias","C) Edipo","D) Layo"],correcta:2},
+{pregunta:"¿Quién escribió Edipo Rey?",opciones:["A) Homero","B) Sófocles","C) Eurípides","D) Aristóteles"],correcta:1},
+{pregunta:"¿Qué problema afecta a la ciudad de Tebas al inicio de la obra?",opciones:["A) Una guerra","B) Un terremoto","C) Una peste o plaga","D) Una inundación"],correcta:2},
+{pregunta:"¿Qué cargo ocupa Edipo en Tebas?",opciones:["A) Sacerdote","B) General","C) Rey","D) Mensajero"],correcta:2},
+{pregunta:"¿Quién era el rey de Tebas antes de Edipo?",opciones:["A) Creonte","B) Layo","C) Polibo","D) Tiresias"],correcta:1},
+{pregunta:"¿Qué profecía recibió Layo sobre su hijo?",opciones:["A) Que sería un gran rey.","B) Que conquistaría Grecia.","C) Que mataría a su padre y se casaría con su madre.","D) Que salvaría Tebas de una guerra."],correcta:2},
+{pregunta:"¿Quién es la madre de Edipo?",opciones:["A) Antígona","B) Yocasta","C) Ismene","D) Eurídice"],correcta:1},
+{pregunta:"¿Quién revela gran parte de la verdad sobre el pasado de Edipo?",opciones:["A) Tiresias, el adivino.","B) Un soldado espartano.","C) Antígona.","D) Polibo."],correcta:0},
+{pregunta:"¿Qué descubre Edipo al final de la obra?",opciones:["A) Que es hijo de Creonte.","B) Que derrotará a los dioses.","C) Que cumplió la profecía sin saberlo.","D) Que la peste era una mentira."],correcta:2},
+{pregunta:"¿Qué hace Edipo cuando conoce la verdad?",opciones:["A) Huye de Tebas inmediatamente.","B) Se convierte en sacerdote.","C) Se saca los ojos.","D) Se proclama emperador."],correcta:2},
+{pregunta:"¿Qué sucede con Yocasta al descubrir la verdad?",opciones:["A) Se exilia.","B) Se convierte en reina de otra ciudad.","C) Se suicida.","D) Es encarcelada."],correcta:2},
+{pregunta:"¿Cuál es el tema principal de Edipo Rey?",opciones:["A) La amistad.","B) El destino y la imposibilidad de escapar de él.","C) La conquista militar.","D) El comercio entre ciudades."],correcta:1}
+];
+
+let indiceActual=0,puntaje=0;
+preguntas.sort(()=>Math.random()-0.5);
+
+function mostrar(id){
+document.querySelectorAll('.pantalla').forEach(x=>x.classList.remove('activa'));
+document.getElementById(id).classList.add('activa');
+}
+
+function iniciarJuego(){
+mostrar('carga');
+let p=0;
+const barra=document.getElementById('progreso');
+const texto=document.getElementById('textoCarga');
+const t=setInterval(()=>{
+p+=5;
+barra.style.width=p+'%';
+texto.textContent=p+'%';
+if(p>=100){
+clearInterval(t);
+mostrar('quiz');
+cargarPregunta();
+}
+},60);
+}
+
+function cargarPregunta(){
+document.getElementById("resultado").textContent="";
+document.getElementById("siguiente").style.display="none";
+const p=preguntas[indiceActual];
+document.getElementById("pregunta").innerHTML="<h2>"+(indiceActual+1)+". "+p.pregunta+"</h2>";
+const op=document.getElementById("opciones");
+op.innerHTML="";
+p.opciones.forEach((t,i)=>{
+const b=document.createElement("button");
+b.className="opcion";
+b.textContent=t;
+b.onclick=()=>verificar(i);
+op.appendChild(b);
+});
+}
+
+function verificar(i){
+const p=preguntas[indiceActual];
+const botones=document.querySelectorAll(".opcion");
+botones.forEach(b=>b.disabled=true);
+if(i===p.correcta){puntaje++;botones[i].classList.add("correcta");document.getElementById("resultado").textContent="✅ Correcto";}
+else{botones[i].classList.add("incorrecta");botones[p.correcta].classList.add("correcta");document.getElementById("resultado").textContent="❌ Incorrecto";}
+document.getElementById("puntaje").textContent=`Puntaje: ${puntaje} / 12`;
+document.getElementById("siguiente").style.display="inline-block";
+}
+
+function siguientePregunta(){
+indiceActual++;
+if(indiceActual<preguntas.length){cargarPregunta();}
+else{
+document.getElementById("pregunta").style.display="none";
+document.getElementById("opciones").style.display="none";
+document.getElementById("resultado").style.display="none";
+document.getElementById("siguiente").style.display="none";
+document.getElementById("final").innerHTML=`🏆 Juego terminado<br><br>Obtuviste ${puntaje} de ${preguntas.length} puntos.`;
+}
+}
+</script>
+</body>
+</html>
